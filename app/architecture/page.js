@@ -23,8 +23,9 @@ export default function Architecture() {
           <h3 className="text-xl font-bold">Head Node (Master)</h3>
           <p className="text-blue-300 text-xs font-mono mt-1 tracking-widest uppercase">Controller & Scheduler</p>
           <div className="mt-4 pt-4 border-t border-slate-700 grid grid-cols-2 gap-2 text-[10px] font-mono opacity-80 uppercase">
-            <div>Internal: 10.0.0.1</div>
+            
             <div>External: 192.168.1.x</div>
+            <div>Internal: 10.0.0.1</div>
           </div>
         </div>
 
@@ -35,7 +36,7 @@ export default function Architecture() {
           ))}
         </div>
 
-        {/* Compute Nodes Grid */}
+        {/* Compute Nodes cluster */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full relative z-10">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-lg text-center hover:-translate-y-2 transition-transform duration-300 group">
