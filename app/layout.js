@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+// 1. Import your new MainLayout instead of just Navbar/Footer
+import MainLayout from "@/components/layout/MainLayout"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,17 +25,15 @@ export default function RootLayout({ children }) {
       suppressHydrationWarning 
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="bg-slate-50 text-slate-900 flex flex-col min-h-screen">
-        {/* The Navbar will now show on every page */}
-        <Navbar />
-        
-        {/* This main tag contains your page content */}
-        <main className="grow">
+      <body className="min-h-screen">
+        {/* 
+           2. Wrap everything in MainLayout. 
+           MainLayout already contains the Navbar, Footer, 
+           and the animated background.
+        */}
+        <MainLayout>
           {children}
-        </main>
-
-        {/* The Footer will now show at the bottom of every page */}
-        <Footer />
+        </MainLayout>
       </body>
     </html>
   );
