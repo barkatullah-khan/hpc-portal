@@ -1,138 +1,142 @@
 "use client";
+import toast, { Toaster } from 'react-hot-toast';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, Activity, CheckCircle2, 
-  Clock, AlertCircle, Terminal, Cpu, HardDrive 
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion'; // Added AnimatePresence for smoother modal
+import api from '@/utils/api'; // <--- FIX 1: Import your custom api instance
+import { Activity, Cpu, Info, ListChecks } from 'lucide-react';
 import JobForm from '@/components/jobs/JobForm';
 import JobTable from '@/components/jobs/JobTable';
 import { diagonalTilt } from '@/utils/animations';
 
 export default function UserDashboard() {
-  // Original logic for backend connectivity
-  const handleViewLog = (jobId) => {
-    console.log("Fetching logs for:", jobId);
-    alert("Viewing Output for Job #" + jobId);
+  const [availableNodes, setAvailableNodes] = useState(0);
+  const [activeJobsCount, setActiveJobsCount] = useState(0);
+  const [logContent, setLogContent] = useState(null);
+  const [isLogOpen, setIsLogOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchUserContext = async () => {
+      try {
+        // Use 'api' instead of axios to maintain consistency
+        const response = await api.get('/hpc/stats'); 
+        const data = response.data.data || response.data;
+
+        const idle = parseInt(data.nodes?.split('/')[0]) || 0;
+        setAvailableNodes(idle);
+        setActiveJobsCount(data.jobs || 0);
+      } catch (err) {
+        console.error("User Context Sync Error:", err.message);
+      }
+    };
+
+    fetchUserContext();
+    const interval = setInterval(fetchUserContext, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleViewLog = async (jobId) => {
+    const toastId = toast.loading("Fetching execution logs...");
+    try {
+      // FIX 1: This now uses the imported 'api'
+      const res = await api.get(`/hpc/job-logs/${jobId}`); 
+      setLogContent(res.data.output);
+      setIsLogOpen(true);
+      toast.success("Logs retrieved", { id: toastId });
+    } catch (err) {
+      toast.error("Log file not found yet.", { id: toastId });
+    }
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-400 mx-auto p-4 md:p-8 space-y-8"
+      className="max-w-7xl mx-auto p-4 md:p-8 space-y-8"
     >
-      {/* --- STEP 1: GLASS HEADER WITH DIAGONAL TILT --- */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-white/5">
+      {/* FIX 2: Add the Toaster component so notifications actually show up */}
+      <Toaster position="top-right" reverseOrder={false} />
+
+      <header className="flex flex-col md:flex-row justify-between items-end pb-6 border-b border-white/5">
         <div>
-          <motion.h1 
+          <motion.h1
             variants={diagonalTilt}
             initial="initial"
             whileHover="hover"
-            className="text-4xl font-black text-white tracking-tighter cursor-default"
+            className="text-4xl font-black text-white tracking-tighter uppercase"
           >
-            RESEARCHER <span className="text-green-500">PORTAL</span>
+            Job <span className="text-blue-500">Controller</span>
           </motion.h1>
-          <div className="flex items-center gap-3 mt-2 text-gray-500 font-mono text-xs uppercase tracking-widest">
-            <span className="flex h-2 w-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></span>
-            System Status: Optimal / Node-01
-          </div>
+          <p className="text-gray-500 font-mono text-[10px] mt-1 tracking-widest uppercase">
+            UET Mardan Cluster / Slurm Workload Manager
+          </p>
         </div>
 
-        {/* Quick Actions / Time */}
-        <div className="hidden lg:flex gap-4">
-           <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10 text-right">
-              <p className="text-[10px] text-gray-500 uppercase">Current Session</p>
-              <p className="text-sm font-bold text-white font-mono">04:12:45</p>
-           </div>
+        <div className="flex gap-4">
+          <div className="text-right border-r border-white/10 pr-4">
+            <p className="text-[10px] text-gray-500 uppercase font-bold">Idle Resources</p>
+            <p className="text-lg font-mono text-green-400 font-bold">{availableNodes} Nodes</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[10px] text-gray-500 uppercase font-bold">In Queue</p>
+            <p className="text-lg font-mono text-blue-400 font-bold">{activeJobsCount} Jobs</p>
+          </div>
         </div>
       </header>
 
-      --- STEP 2: REAL-TIME METRICS (Professional Polish) ---
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Active Jobs", val: "02", icon: <Activity />, color: "border-blue-500/50 text-blue-400" },
-          { label: "Success Rate", val: "98%", icon: <CheckCircle2 />, color: "border-green-500/50 text-green-400" },
-          { label: "Credits Left", val: "1.2k", icon: <Cpu />, color: "border-purple-500/50 text-purple-400" },
-          { label: "Storage Used", val: "45GB", icon: <HardDrive />, color: "border-amber-500/50 text-amber-400" },
-        ].map((stat, i) => (
-          <motion.div 
-            key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className={`bg-white/3 backdrop-blur-md border ${stat.color} p-5 rounded-4xl hover:bg-white/6 transition-all`}
-          >
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-tighter opacity-60">{stat.label}</span>
-              <span className="opacity-80">{stat.icon}</span>
-            </div>
-            <div className="text-3xl font-black text-white">{stat.val}</div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* --- STEP 3: DUAL-COLUMN WORKSPACE --- */}
-      <div className="grid xl:grid-cols-12 gap-8 items-start">
-        
-        {/* Left: Configuration & Submission (4 Cols) */}
-        <motion.div 
-          initial={{ opacity: 0, x: -30 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="xl:col-span-4 space-y-6"
-        >
-          <div className="bg-white/5 backdrop-blur-3xl p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Terminal size={80} />
-            </div>
-            <h2 className="text-xl font-bold text-white mb-8 flex items-center gap-3">
-              <span className="h-2 w-8 bg-blue-500 rounded-full" />
-              Configure Job
-            </h2>
-            <JobForm />
-          </div>
-
-          {/* New Element: System Alerts/Notice */}
-          <div className="bg-linear-to-r from-amber-500/10 to-transparent p-6 rounded-4xl border border-amber-500/20">
-            <div className="flex gap-4 items-start text-amber-200">
-              <AlertCircle className="shrink-0" />
-              <div className="text-xs">
-                <p className="font-bold uppercase tracking-widest mb-1">Queue Warning</p>
-                <p className="opacity-70">Cluster Node-04 is undergoing maintenance. Expect slight delays in partition scheduling.</p>
+      <div className="grid xl:grid-cols-12 gap-8">
+        <div className="xl:col-span-4">
+          <div className="bg-white/5 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/10 shadow-2xl">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <Cpu size={18} className="text-blue-400" />
               </div>
+              <h2 className="text-lg font-bold text-white uppercase tracking-tight">New Simulation</h2>
             </div>
+            <JobForm idleNodes={availableNodes} />
           </div>
-        </motion.div>
+        </div>
 
-        {/* Right: Monitoring & Table (8 Cols) */}
-        <motion.div 
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="xl:col-span-8 bg-white/5 backdrop-blur-3xl p-8 rounded-[3rem] border border-white/10 shadow-2xl"
-        >
+        <div className="xl:col-span-8 bg-white/5 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/10">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-bold text-white flex items-center gap-3">
-               <span className="h-2 w-8 bg-green-500 rounded-full" />
-               Job Execution History
-            </h2>
-            <div className="flex gap-2">
-               <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
-               <span className="text-[10px] text-gray-500 uppercase font-mono">Live Sync</span>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-500/20 rounded-lg">
+                <ListChecks size={18} className="text-green-400" />
+              </div>
+              <h2 className="text-lg font-bold text-white uppercase tracking-tight">My Executions</h2>
             </div>
           </div>
-          
-          <div className="rounded-2xl overflow-hidden border border-white/5 bg-black/20">
-            <JobTable handleViewLog={handleViewLog} />
-          </div>
-        </motion.div>
+          <JobTable handleViewLog={handleViewLog} />
+        </div>
       </div>
 
-      {/* --- FOOTER DECORATION --- */}
-      <footer className="text-center pt-10">
-         <p className="text-[10px] text-gray-600 font-mono tracking-widest uppercase">
-           High Performance Computing Portal / Powered by Slurm & Warewulf
-         </p>
-      </footer>
+      {/* Terminal Modal wrapped in AnimatePresence for smooth exit */}
+      <AnimatePresence>
+        {isLogOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0b0e14] border border-white/10 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden"
+            >
+              <div className="bg-white/5 p-4 flex justify-between items-center border-b border-white/5">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500 cursor-pointer hover:bg-red-400" onClick={() => setIsLogOpen(false)} />
+                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                </div>
+                <span className="text-xs font-mono text-gray-400">slurm_output.log</span>
+                <button onClick={() => setIsLogOpen(false)} className="text-gray-400 hover:text-white transition-colors">✕</button>
+              </div>
+
+              <div className="p-6 h-[500px] overflow-y-auto font-mono text-sm text-green-400 custom-scrollbar">
+                <pre className="whitespace-pre-wrap">{logContent || "No output available..."}</pre>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
