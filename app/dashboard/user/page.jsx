@@ -86,7 +86,7 @@ export default function UserDashboard() {
 
       <div className="grid xl:grid-cols-12 gap-8">
         <div className="xl:col-span-4">
-          <div className="bg-white/5 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/10 shadow-2xl">
+          <div className="bg-white/5 backdrop-blur-3xl p-8 rounded-4xl border border-white/10 shadow-2xl">
             <div className="flex items-center gap-3 mb-8">
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <Cpu size={18} className="text-blue-400" />
@@ -97,7 +97,7 @@ export default function UserDashboard() {
           </div>
         </div>
 
-        <div className="xl:col-span-8 bg-white/5 backdrop-blur-3xl p-8 rounded-[2rem] border border-white/10">
+        <div className="xl:col-span-8 bg-white/5 backdrop-blur-3xl p-8 rounded-4xl border border-white/10">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-green-500/20 rounded-lg">
@@ -113,7 +113,7 @@ export default function UserDashboard() {
       {/* Terminal Modal wrapped in AnimatePresence for smooth exit */}
       <AnimatePresence>
         {isLogOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
             <motion.div 
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -130,7 +130,7 @@ export default function UserDashboard() {
                 <button onClick={() => setIsLogOpen(false)} className="text-gray-400 hover:text-white transition-colors">✕</button>
               </div>
 
-              <div className="p-6 h-[500px] overflow-y-auto font-mono text-sm text-green-400 custom-scrollbar">
+              <div className="p-6 h-125 overflow-y-auto font-mono text-sm text-green-400 custom-scrollbar">
                 <pre className="whitespace-pre-wrap">{logContent || "No output available..."}</pre>
               </div>
             </motion.div>
